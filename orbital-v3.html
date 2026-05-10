@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Orbital">
+<meta name="theme-color" content="#03060e">
+<title>Orbital — Dynamic Strategy</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#03060e; --bg1:#070d1a; --bg2:#0b1425; --bg3:#0f1c32;
+  --b:#1c2d47; --b1:#243a57; --b2:#2d4866;
+  --t:#e8f0fe; --t1:#9db4d4; --t2:#5a7a9e; --t3:#344d6b;
+  --g:#00e5b0; --g1:#00b889; --y:#ffc041; --r:#ff4560; --pu:#7c6af5; --pk:#f550a0;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Space Grotesk',sans-serif;
+  --serif:'Playfair Display',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--t);font-family:var(--mono);font-size:12px;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:2px}::-webkit-scrollbar-thumb{background:var(--b1)}
+
+/* Layout */
+#app{display:flex;flex-direction:column;height:100vh;max-width:960px;margin:0 auto}
+#hdr{background:var(--bg1);border-bottom:1px solid var(--b);flex-shrink:0}
+#hdr-inner{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;gap:8px}
+#wordmark{font-family:var(--sans);font-size:18px;font-weight:700;letter-spacing:-.02em;color:var(--g)}
+#wordmark span{color:var(--t2);font-weight:300;font-size:11px;letter-spacing:.08em;margin-left:8px;font-family:var(--mono)}
+#tabs{display:flex;overflow-x:auto;scrollbar-width:none;padding:0 16px;gap:0}
+#tabs::-webkit-scrollbar{display:none}
+.tab{padding:9px 14px;font-size:10px;font-family:var(--sans);font-weight:500;letter-spacing:.05em;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;color:var(--t2);transition:all .2s;user-select:none;text-transform:uppercase}
+.tab:active{opacity:.7}
+.tab.on{color:var(--g);border-bottom-color:var(--g)}
+#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.page{padding:16px;padding-bottom:80px;animation:pageIn .2s ease}
+@keyframes pageIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* Cards */
+.card{background:var(--bg2);border:1px solid var(--b);border-radius:10px;padding:14px 16px;margin-bottom:10px}
+.card.accent-g{border-color:#00e5b033}
+.card.accent-y{border-color:#ffc04133}
+.card.accent-r{border-color:#ff456033}
+.card.accent-pu{border-color:#7c6af533}
+
+/* Typography */
+.label{font-size:9px;color:var(--t2);letter-spacing:.18em;text-transform:uppercase;margin-bottom:5px}
+.disp{font-family:var(--sans);font-weight:700;letter-spacing:-.02em;line-height:1}
+.mono{font-family:var(--mono)}
+.serif{font-family:var(--serif);font-style:italic}
+.muted{color:var(--t2)}
+.dim{color:var(--t3)}
+
+/* Buttons */
+.btn{cursor:pointer;border:none;font-family:var(--sans);font-weight:600;font-size:11px;letter-spacing:.04em;padding:9px 16px;border-radius:7px;transition:all .15s;white-space:nowrap;text-transform:uppercase}
+.btn:active{transform:scale(.96)}
+.btn-g{background:var(--g);color:#03060e}
+.btn-g:hover{background:var(--g1)}
+.btn-y{background:var(--y);color:#03060e}
+.btn-ghost{background:transparent;color:var(--t2);border:1px solid var(--b1)}
+.btn-ghost:hover{border-color:var(--b2);color:var(--t)}
+.btn-sm{padding:5px 10px;font-size:10px;border-radius:5px}
+
+/* Grids */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+
+/* Stats */
+.stat{background:var(--bg2);border:1px solid var(--b);border-radius:8px;padding:10px 12px}
+.stat .val{font-family:var(--sans);font-size:20px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.stat .sub{font-size:9px;color:var(--t2);margin-top:3px}
+
+/* Tables */
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{padding:6px 8px;color:var(--t3);font-size:9px;letter-spacing:.12em;font-weight:500;border-bottom:1px solid var(--b);text-align:right;text-transform:uppercase;font-family:var(--sans)}
+th:first-child{text-align:left}
+td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--b)}
+td:first-child{text-align:left}
+
+/* Score bars */
+.score-wrap{display:flex;align-items:center;gap:6px}
+.score-bar{flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.score-fill{height:100%;border-radius:2px;transition:width .6s ease}
+.score-num{font-family:var(--sans);font-weight:700;font-size:13px;min-width:28px;text-align:right}
+
+/* Signal badges */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:9px;font-family:var(--sans);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+
+/* Progress */
+.prog-wrap{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;transition:width .8s ease}
+
+/* Rows */
+.row{background:var(--bg2);border:1px solid var(--b);border-radius:8px;margin-bottom:7px;overflow:hidden;transition:border-color .2s}
+.row-hdr{padding:12px 14px;display:flex;justify-content:space-between;align-items:flex-start;cursor:pointer;user-select:none}
+.row-hdr:active{background:var(--bg3)}
+.row-body{border-top:1px solid var(--b);padding:12px 14px 14px;display:none}
+.row.open .row-body{display:block}
+
+/* Alerts */
+#toast{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:999;padding:9px 18px;border-radius:8px;font-size:11px;font-family:var(--sans);font-weight:500;text-align:center;display:none;white-space:nowrap;max-width:90vw}
+#toast.show{display:block;animation:toastIn .2s ease}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* Priority action banner */
+.priority-banner{background:linear-gradient(135deg,#00e5b010,#7c6af510);border:1px solid var(--g);border-radius:12px;padding:16px;margin-bottom:14px;position:relative;overflow:hidden}
+.priority-banner::before{content:'';position:absolute;top:0;right:0;width:120px;height:120px;background:radial-gradient(circle,#00e5b015,transparent);border-radius:50%}
+
+/* Opportunity alert */
+.opp-alert{background:linear-gradient(135deg,#ffc04112,#f550a012);border:1px solid var(--y);border-radius:10px;padding:14px;margin-bottom:10px}
+
+/* Position health */
+.health-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* Animations */
+.pulse{animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.spin{display:inline-block;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Inputs */
+input,select{background:var(--bg3);border:1px solid var(--b);color:var(--t);font-family:var(--mono);font-size:12px;padding:8px 11px;border-radius:7px;width:100%;outline:none;-webkit-appearance:none}
+input:focus,select:focus{border-color:#00e5b044}
+
+/* Separator */
+.sep{height:1px;background:var(--b);margin:12px 0}
+
+/* Action items */
+.action{display:flex;gap:8px;margin-bottom:6px;font-size:11px;color:var(--t1);line-height:1.6}
+.action-n{color:#00e5b044;flex-shrink:0}
+
+@media(max-width:480px){.g4{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div id="app">
+  <div id="hdr">
+    <div id="hdr-inner">
+      <div>
+        <div id="wordmark">ORBITAL <span>DYNAMIC STRATEGY</span></div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-g btn-sm" id="refresh-btn" onclick="autoRun()">⟳ Analyze</button>
+        <button class="btn btn-ghost btn-sm" onclick="showTab('settings')">⚙</button>
+      </div>
+    </div>
+    <div id="tabs">
+      <div class="tab on" onclick="showTab('command')">Command</div>
+      <div class="tab" onclick="showTab('positions')">Positions</div>
+      <div class="tab" onclick="showTab('screen')">Screen</div>
+      <div class="tab" onclick="showTab('intel')">Intel</div>
+      <div class="tab" onclick="showTab('mortgage')">Mortgage</div>
+      <div class="tab" onclick="showTab('settings')">Settings</div>
+    </div>
+  </div>
+  <div id="content"><div class="page" id="page-content"></div></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const POSITIONS = [
+  {ticker:'ASTS',  shares:2122, basis:0,    type:'CORE',      thesis:'Core engine. $0 basis. Hold through thesis break or price triggers: $150/$200/$280.'},
+  {ticker:'IONQ',  shares:0,    basis:0,    type:'SATELLITE', thesis:'5x Jan 2027 $50 calls. 755% revenue growth. Exit: 2 at $68, 2 at $78, 1 at $90+. Roll if below $60 by Oct 15.'},
+  {ticker:'KTOS',  shares:0,    basis:0,    type:'SATELLITE', thesis:'60-70 share starter. Defense AI. Cash burn watch — add only if Q2 confirms improvement.'},
+  {ticker:'PACB',  shares:0,    basis:0,    type:'SATELLITE', thesis:'Small lottery ticket. Max $1,500. SparkNex H2 2026. Sell $1.00 Jan 2027 puts simultaneously.'},
+  {ticker:'TSM',   shares:0,    basis:0,    type:'BALLAST',   thesis:'5 share anchor. Best large-cap global AI value. 35% growth at 22x earnings. Dollar weakness tailwind.'},
+  {ticker:'QBTS',  shares:0,    basis:0,    type:'WATCH',     thesis:'Quantum annealing. Wait for post-earnings dip. Max 1-2% portfolio. Lottery ticket sizing only.'},
+  {ticker:'MU',    shares:0,    basis:0,    type:'WATCH',     thesis:'Memory supercycle. Already 7x from original ref. Add on pullback to $580. HBM demand anchor.'},
+  {ticker:'RHM',   shares:0,    basis:0,    type:'WATCH',     thesis:'European defense. RNMBF on OTC. Down 37% from peak. 62% upside. NATO rearmament supercycle.'},
+  {ticker:'CRDO',  shares:0,    basis:0,    type:'WATCH',     thesis:'AI connectivity chips. 200% growth. Wait for $140-155 entry. Currently too expensive at $183.'},
+  {ticker:'ONTTF', shares:0,    basis:0,    type:'WATCH',     thesis:'Oxford Nanopore UK. OTC. Target $4-5. Down 75% from IPO. Portability moat vs PACB.'},
+];
+
+const PRICE_TRIGGERS = [
+  {ticker:'ASTS', price:280, dir:'above', action:'FULL PAYOFF — sell all shares → mortgage', pri:'CRITICAL', emoji:'⚡'},
+  {ticker:'ASTS', price:200, dir:'above', action:'SPOUSE FREEDOM — sell 1,600 shares → mortgage', pri:'CRITICAL', emoji:'⚡'},
+  {ticker:'ASTS', price:150, dir:'above', action:'Sell 400-500 shares → mortgage principal', pri:'HIGH', emoji:'↑'},
+  {ticker:'ASTS', price:65,  dir:'below', action:'Thesis check → buy dip from reserve if intact', pri:'HIGH', emoji:'↓'},
+  {ticker:'IONQ', price:90,  dir:'above', action:'Sell final call contract — bull case achieved', pri:'HIGH', emoji:'↑'},
+  {ticker:'IONQ', price:78,  dir:'above', action:'Sell 2 more call contracts', pri:'MEDIUM', emoji:'↑'},
+  {ticker:'IONQ', price:68,  dir:'above', action:'First target — sell 2 of 5 contracts', pri:'MEDIUM', emoji:'↑'},
+  {ticker:'PACB', price:4,   dir:'above', action:'Sell 30% of PACB position', pri:'MEDIUM', emoji:'↑'},
+  {ticker:'KTOS', price:100, dir:'above', action:'Sell 40% of KTOS position', pri:'MEDIUM', emoji:'↑'},
+];
+
+// Two distinct pipelines — scored against different benchmarks
+// Pipeline A: ASYMMETRIC — small/mid cap, high beta, beaten down, binary catalyst potential
+// Pipeline B: BALLAST — large cap, profitable, growing faster than priced, durable moat
+
+const ASYMMETRIC_PRESETS = [
+  {id:'deep_value_tech', name:'Deep Value Tech', icon:'⚡', type:'ASYMMETRIC',
+   desc:'$100M–$5B, beta 1.5+, tech/healthcare/defense, high volume',
+   params:{marketCapMoreThan:1e8,marketCapLessThan:5e9,betaMoreThan:1.5,volumeMoreThan:200000,isEtf:false,limit:45}},
+  {id:'fallen_angels', name:'Fallen Angels', icon:'↓', type:'ASYMMETRIC',
+   desc:'$50M–$8B, beaten down 40%+, still actively traded',
+   params:{marketCapMoreThan:5e7,marketCapLessThan:8e9,betaMoreThan:1.3,volumeMoreThan:150000,isEtf:false,limit:45}},
+  {id:'defense_quantum', name:'Defense & Deep Tech', icon:'🛡', type:'ASYMMETRIC',
+   desc:'Industrials + Technology, government contract moat potential',
+   params:{marketCapMoreThan:1e8,marketCapLessThan:1e10,betaMoreThan:1.0,volumeMoreThan:100000,sector:'Industrials',isEtf:false,limit:40}},
+  {id:'biotech_genomics', name:'Biotech & Genomics', icon:'🧬', type:'ASYMMETRIC',
+   desc:'Healthcare, mid-cap, binary catalyst setups',
+   params:{marketCapMoreThan:5e7,marketCapLessThan:5e9,betaMoreThan:1.5,volumeMoreThan:100000,sector:'Healthcare',isEtf:false,limit:40}},
+];
+
+const BALLAST_PRESETS = [
+  {id:'quality_compounder', name:'Quality Compounders', icon:'🏛', type:'BALLAST',
+   desc:'$10B+, profitable, growing 15%+, strong moat',
+   params:{marketCapMoreThan:1e10,marketCapLessThan:5e12,betaMoreThan:0.5,volumeMoreThan:1000000,isEtf:false,limit:40}},
+  {id:'global_leaders', name:'Global AI Infrastructure', icon:'🌐', type:'BALLAST',
+   desc:'$5B+, Technology sector, AI supply chain, dollar diversification',
+   params:{marketCapMoreThan:5e9,marketCapLessThan:5e12,betaMoreThan:0.8,volumeMoreThan:500000,sector:'Technology',isEtf:false,limit:40}},
+  {id:'defense_primes', name:'Defense Primes', icon:'⚔', type:'BALLAST',
+   desc:'Large defense/industrials, backlog visibility, government moat',
+   params:{marketCapMoreThan:5e9,marketCapLessThan:1e12,betaMoreThan:0.5,volumeMoreThan:300000,sector:'Industrials',isEtf:false,limit:40}},
+  {id:'financial_infra', name:'Financial Infrastructure', icon:'💳', type:'BALLAST',
+   desc:'$5B+, fintech/payments, recurring revenue, network effects',
+   params:{marketCapMoreThan:5e9,marketCapLessThan:5e11,betaMoreThan:0.7,volumeMoreThan:500000,sector:'Financial Services',isEtf:false,limit:40}},
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let fmpKey    = localStorage.getItem('orb3_fmp') || '';
+let portfolio = JSON.parse(localStorage.getItem('orb3_port') || 'null') || {
+  asts_shares:2122, asts_price:67.82, mortgage_balance:510000,
+  mortgage_rate:6.625, monthly_payment:3270, annual_premium_net:20385,
+  reserve_balance:10000, last_updated:tod()
+};
+let liveQuotes   = JSON.parse(localStorage.getItem('orb3_quotes') || '{}');
+let screenRes    = JSON.parse(localStorage.getItem('orb3_screen') || '[]');
+let screenBallast= JSON.parse(localStorage.getItem('orb3_screen_b') || '[]');
+let activeScreenType = localStorage.getItem('orb3_screen_type') || 'ASYMMETRIC';
+let intelCache   = JSON.parse(localStorage.getItem('orb3_intel')  || '{}');
+let lastScreen   = localStorage.getItem('orb3_last_screen') || null;
+let lastAnalyze  = localStorage.getItem('orb3_last_analyze') || null;
+let currentTab   = 'command';
+let openRow      = null;
+let intelTicker  = 'ASTS';
+let analyzing    = false;
+let screening    = false;
+let intelLoading = false;
+let opportunities= [];
+
+function save(){
+  localStorage.setItem('orb3_port', JSON.stringify(portfolio));
+  localStorage.setItem('orb3_quotes', JSON.stringify(liveQuotes));
+  localStorage.setItem('orb3_screen', JSON.stringify(screenRes));
+  localStorage.setItem('orb3_screen_b', JSON.stringify(screenBallast));
+  localStorage.setItem('orb3_screen_type', activeScreenType);
+  localStorage.setItem('orb3_intel', JSON.stringify(intelCache));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function tod(){ return new Date().toISOString().split('T')[0]; }
+function now(){ return new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
+function fmt(n){ if(n==null)return'—'; if(n>=1e9)return'$'+(n/1e9).toFixed(2)+'B'; if(n>=1e6)return'$'+(n/1e6).toFixed(2)+'M'; return'$'+Math.round(n).toLocaleString(); }
+function fmtP(n){ if(n==null)return'—'; return(n>=0?'+':'')+n.toFixed(2)+'%'; }
+function fmtN(n){ if(n==null)return'—'; if(n>=1e9)return(n/1e9).toFixed(2)+'B'; if(n>=1e6)return(n/1e6).toFixed(2)+'M'; return Math.round(n).toLocaleString(); }
+
+function mortBal(init,pmt,rate,yrs,extra=0){
+  let b=init; const mr=rate/12/100; const me=extra/12;
+  for(let m=0;m<yrs*12;m++){b-=(pmt-b*mr+me);if(b<=0)return 0;}
+  return Math.max(0,b);
+}
+
+function getRouting(price,mortBal){
+  if(mortBal<=200000)return{label:'Mortgage ≤ $200K',m:0,i:60,a:40,r:0,c:'var(--pu)'};
+  if(price>100)return{label:'ASTS above $100',m:50,i:30,a:0,r:20,c:'var(--g)'};
+  if(price>=65)return{label:'ASTS $65–100',m:40,i:20,a:40,r:0,c:'var(--y)'};
+  return{label:'ASTS below $65',m:20,i:0,a:80,r:0,c:'var(--r)'};
+}
+
+let toastT;
+function toast(msg,type='ok'){
+  const el=document.getElementById('toast');
+  const c={ok:['#00e5b020','#00e5b0','#00e5b0'],info:['#7c6af520','#7c6af5','#7c6af5'],warn:['#ffc04120','#ffc041','#ffc041'],err:['#ff456020','#ff4560','#ff4560']};
+  const[bg,br,col]=c[type]||c.ok;
+  Object.assign(el.style,{background:bg,border:`1px solid ${br}44`,color:col});
+  el.textContent=msg; el.className='show';
+  clearTimeout(toastT); toastT=setTimeout(()=>el.className='',4000);
+}
+
+function setBtn(loading){
+  const b=document.getElementById('refresh-btn');
+  if(b){b.textContent=loading?'⟳ Analyzing…':'⟳ Analyze'; b.disabled=loading;}
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FMP API
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function fmp(ep){
+  if(!fmpKey)throw new Error('no_key');
+  const sep=ep.includes('?')?'&':'?';
+  const r=await fetch(`https://financialmodelingprep.com/api${ep}${sep}apikey=${fmpKey}`);
+  if(!r.ok)throw new Error(`fmp_${r.status}`);
+  return r.json();
+}
+
+async function fetchQuotes(tickers){
+  try{
+    const d=await fmp(`/v3/quote/${tickers.join(',')}`);
+    const m={};(d||[]).forEach(q=>m[q.symbol]=q);
+    return m;
+  }catch{return{};}
+}
+
+async function runScreener(params){
+  const qs=Object.entries({...params,isActivelyTrading:true}).map(([k,v])=>`${k}=${encodeURIComponent(v)}`).join('&');
+  try{ const d=await fmp(`/v3/stock-screener?${qs}`); return d||[]; }
+  catch{return[];}
+}
+
+async function fetchIntelData(ticker){
+  const r={ticker,fetchedAt:new Date().toISOString()};
+  try{r.news=await fmp(`/v3/stock_news?tickers=${ticker}&limit=6`);}catch{r.news=[];}
+  try{r.grades=await fmp(`/v3/grade/${ticker}?limit=6`);}catch{r.grades=[];}
+  try{const s=await fmp(`/v3/earnings-surprises/${ticker}`);r.surprises=(s||[]).slice(0,4);}catch{r.surprises=[];}
+  try{r.sentiment=await fmp(`/v4/social-sentiment?symbol=${ticker}&limit=3`);}catch{r.sentiment=[];}
+  try{r.gradeSummary=await fmp(`/v3/analyst-stock-recommendations/${ticker}?limit=2`);}catch{r.gradeSummary=[];}
+  return r;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SCORING ENGINE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function scorePosition(q, pos){
+  // Score a held position — how well is the thesis holding?
+  let score=5; // start neutral
+  const reasons=[];
+
+  if(!q) return {score:5,health:'unknown',reasons:['No price data']};
+
+  const chg=q.changesPercentage||0;
+  const hi=q.yearHigh||q.price||1;
+  const downFromHigh=((hi-q.price)/hi)*100;
+  const mc=(q.marketCap||0)/1e9;
+
+  // Momentum
+  if(chg>3){score+=0.5;reasons.push(`Up ${chg.toFixed(1)}% today`);}
+  else if(chg<-5){score-=0.5;reasons.push(`Down ${Math.abs(chg).toFixed(1)}% today`);}
+
+  // Entry quality relative to current price
+  if(downFromHigh>50){score+=1;reasons.push(`Still ${downFromHigh.toFixed(0)}% below 52W high — room to run`);}
+  else if(downFromHigh<5){score-=0.5;reasons.push(`Near 52W high — limited upside from here`);}
+
+  // Liquidity
+  if((q.volume||0)>1000000)score+=0.5;
+
+  // PE sanity
+  if(q.pe&&q.pe>0&&q.pe<30){score+=0.5;reasons.push(`P/E ${q.pe.toFixed(0)} — reasonable`);}
+  else if(q.pe&&q.pe>100){score-=0.5;reasons.push(`P/E ${q.pe.toFixed(0)} — stretched`);}
+
+  const health = score>=7?'strong':score>=5.5?'ok':score>=4?'watch':'weak';
+  return {score:Math.min(10,Math.max(0,score)),health,reasons};
+}
+
+function scoreAsymmetric(r){
+  // Scores a candidate as an ASYMMETRIC opportunity
+  // What matters: entry price vs potential, volatility that creates entries,
+  // market cap small enough that discovery drives re-rating, moat potential
+  let score=0; const reasons=[];
+
+  const price=r.price||0;
+  const hi=r.yearHigh||price||1;
+  const lo=r.yearLow||0;
+  const downFromHigh=hi>0?((hi-price)/hi)*100:0;
+  const mc=(r.marketCap||0)/1e6; // millions
+  const beta=r.beta||0;
+  const vol=r.volume||0;
+
+  // ── Entry quality: asymmetry comes from buying low (0–2.5 pts) ──
+  if(downFromHigh>70){score+=2.5;reasons.push(`↓${downFromHigh.toFixed(0)}% from high — maximum asymmetry entry`);}
+  else if(downFromHigh>50){score+=2.0;reasons.push(`↓${downFromHigh.toFixed(0)}% from high — deep value`);}
+  else if(downFromHigh>30){score+=1.0;reasons.push(`↓${downFromHigh.toFixed(0)}% from high — meaningful dip`);}
+  else if(downFromHigh>15){score+=0.5;}
+  else if(downFromHigh<5){score-=0.5;reasons.push('Near 52W high — entry risk for asymmetric');}
+
+  // ── Market cap: smaller = more room to re-rate (0–1.5 pts) ──
+  if(mc>50&&mc<500){score+=1.5;reasons.push(`$${mc.toFixed(0)}M cap — pre-discovery range`);}
+  else if(mc>=500&&mc<2000){score+=1.0;reasons.push(`$${(mc/1000).toFixed(1)}B cap — asymmetric sweet spot`);}
+  else if(mc>=2000&&mc<8000){score+=0.5;}
+  else if(mc>=8000){score-=0.5;reasons.push('Large cap — limited asymmetric re-rating potential');}
+
+  // ── Beta: volatility creates dip-buying opportunities (0–1 pt) ──
+  if(beta>3.0){score+=1.0;reasons.push(`Beta ${beta.toFixed(1)} — extreme vol, creates entries`);}
+  else if(beta>2.0){score+=0.75;reasons.push(`Beta ${beta.toFixed(1)} — high volatility`);}
+  else if(beta>1.5){score+=0.5;}
+  else if(beta<0.8){score-=0.5;reasons.push('Low beta — limited asymmetric upside velocity');}
+
+  // ── Liquidity: must be tradeable (0–1 pt) ──
+  if(vol>1000000){score+=1.0;reasons.push('High volume — liquid for position sizing');}
+  else if(vol>300000){score+=0.75;}
+  else if(vol>100000){score+=0.5;}
+  else{score-=0.5;reasons.push('Low volume — liquidity risk');}
+
+  // ── Sector moat potential (0–0.5 pt) ──
+  const moatSectors=['Technology','Healthcare','Industrials','Communication Services','Energy'];
+  if(moatSectors.includes(r.sector)){score+=0.5;reasons.push(`${r.sector} — moat-capable sector`);}
+
+  // ── Not already a held satellite (0 or -1) ──
+  const heldSatellite=POSITIONS.find(p=>p.ticker===r.symbol&&(p.type==='SATELLITE'||p.type==='CORE'));
+  if(heldSatellite){score-=1;reasons.push('Already held as satellite/core');}
+
+  // ── Price sanity — avoid obvious penny stocks ──
+  if(price<0.5){score-=1;reasons.push('Sub-$0.50 — penny stock risk');}
+  else if(price<2&&mc<50){score-=0.5;}
+
+  return {score:Math.min(10,Math.max(0,score)), reasons, type:'ASYMMETRIC'};
+}
+
+function scoreBallast(r){
+  // Scores a candidate as a BALLAST position
+  // What matters: quality of business, profitable growth faster than priced in,
+  // durable moat, reasonable valuation relative to growth, stability
+  let score=0; const reasons=[];
+
+  const price=r.price||0;
+  const hi=r.yearHigh||price||1;
+  const downFromHigh=hi>0?((hi-price)/hi)*100:0;
+  const mc=(r.marketCap||0)/1e9; // billions
+  const beta=r.beta||0;
+  const pe=r.pe||null;
+  const vol=r.volume||0;
+
+  // ── Market cap: large enough to be stable anchor (0–1.5 pts) ──
+  if(mc>=50&&mc<=500){score+=1.5;reasons.push(`$${mc.toFixed(0)}B cap — large-cap anchor quality`);}
+  else if(mc>=10&&mc<50){score+=1.0;reasons.push(`$${mc.toFixed(1)}B cap — mid-large, growing into ballast`);}
+  else if(mc>=500){score+=0.75;reasons.push(`$${mc.toFixed(0)}B mega-cap — maximum stability`);}
+  else if(mc<5){score-=0.5;reasons.push('Too small for reliable ballast role');}
+
+  // ── Valuation: growing into price matters (0–2 pts) ──
+  if(pe&&pe>0&&pe<20){score+=2.0;reasons.push(`P/E ${pe.toFixed(0)} — undervalued for quality`);}
+  else if(pe&&pe>0&&pe<35){score+=1.0;reasons.push(`P/E ${pe.toFixed(0)} — reasonable for moat quality`);}
+  else if(pe&&pe>0&&pe<50){score+=0.5;}
+  else if(pe&&pe>100){score-=0.5;reasons.push(`P/E ${pe.toFixed(0)} — priced for perfection`);}
+  else if(!pe||pe<=0){score+=0.5;reasons.push('No P/E — growth stage, check revenue multiple');}
+
+  // ── Dip entry: even ballasts are better bought on weakness (0–1.5 pts) ──
+  if(downFromHigh>40){score+=1.5;reasons.push(`↓${downFromHigh.toFixed(0)}% from high — quality on sale`);}
+  else if(downFromHigh>20){score+=1.0;reasons.push(`↓${downFromHigh.toFixed(0)}% from high — meaningful discount`);}
+  else if(downFromHigh>10){score+=0.5;}
+  else{score+=0;reasons.push('Near highs — wait for better entry');}
+
+  // ── Beta: ballast should dampen portfolio volatility (0–1 pt) ──
+  if(beta>=0.7&&beta<=1.3){score+=1.0;reasons.push(`Beta ${beta.toFixed(1)} — good ballast stability`);}
+  else if(beta>1.3&&beta<=1.8){score+=0.5;reasons.push(`Beta ${beta.toFixed(1)} — slightly elevated but ok`);}
+  else if(beta>1.8){score-=0.5;reasons.push(`Beta ${beta.toFixed(1)} — too volatile for ballast role`);}
+  else if(beta<0.5&&beta>0){score+=0.75;reasons.push(`Beta ${beta.toFixed(1)} — defensive anchor`);}
+
+  // ── Liquidity: must be easily tradeable (0–1 pt) ──
+  if(vol>5000000){score+=1.0;reasons.push('Excellent liquidity — institutional grade');}
+  else if(vol>1000000){score+=0.75;}
+  else if(vol>300000){score+=0.5;}
+  else{score-=0.5;reasons.push('Low volume — unusual for large cap');}
+
+  // ── Sector quality: prefer durable structural demand (0–0.5 pt) ──
+  const moatSectors=['Technology','Healthcare','Financial Services','Industrials','Consumer Defensive'];
+  if(moatSectors.includes(r.sector)){score+=0.5;reasons.push(`${r.sector} — structural demand sector`);}
+
+  // ── Not already held as ballast ──
+  const heldBallast=POSITIONS.find(p=>p.ticker===r.symbol&&p.type==='BALLAST');
+  if(heldBallast){score-=0.5;reasons.push('Already held as ballast');}
+
+  return {score:Math.min(10,Math.max(0,score)), reasons, type:'BALLAST'};
+}
+
+function scoreCandidate(r, pipelineType='ASYMMETRIC'){
+  // Route to correct scoring pipeline
+  if(pipelineType==='BALLAST') return scoreBallast(r);
+  return scoreAsymmetric(r);
+}
+
+function detectOpportunities(positions, quotes, asymResults, ballastResults){
+  const opps=[];
+  const allScreen=[...asymResults,...ballastResults];
+
+  // 1. Price triggers fired
+  PRICE_TRIGGERS.forEach(t=>{
+    const q=quotes[t.ticker];
+    if(!q)return;
+    const fired=t.dir==='above'?q.price>=t.price:q.price<=t.price;
+    if(fired)opps.push({
+      type:'TRIGGER', priority:t.pri==='CRITICAL'?0:t.pri==='HIGH'?1:2,
+      ticker:t.ticker, title:`${t.emoji} ${t.label}`,
+      desc:t.action, price:q.price, color:'var(--r)'
+    });
+  });
+
+  // 2. Held positions deteriorating
+  positions.filter(p=>p.shares>0||p.type==='CORE').forEach(p=>{
+    const q=quotes[p.ticker];
+    if(!q)return;
+    const {score,health}=scorePosition(q,p);
+    if(health==='weak')opps.push({
+      type:'DETERIORATION', priority:1,
+      ticker:p.ticker, title:`⚠ ${p.ticker} Health: WEAK`,
+      desc:`Score ${score.toFixed(1)}/10 — thesis check required. Consider rotating.`,
+      price:q.price, color:'var(--y)'
+    });
+  });
+
+  // 3. Better asymmetric opportunities vs current satellites
+  const satScores=positions.filter(p=>p.type==='SATELLITE').map(p=>{
+    const q=quotes[p.ticker]; return q?scorePosition(q,p).score:5;
+  });
+  const avgSat=satScores.length?satScores.reduce((a,b)=>a+b,0)/satScores.length:5;
+
+  asymResults.slice(0,3).filter(r=>r.score>avgSat+1.5).forEach(c=>{
+    opps.push({
+      type:'ASYMMETRIC_OPP', priority:2,
+      ticker:c.symbol, title:`⬆ Asymmetric: ${c.symbol} (${c.score.toFixed(1)}/10)`,
+      desc:`${c.reasons[0]||'Strong setup'} — scores ${(c.score-avgSat).toFixed(1)} above current satellites. Consider rotation.`,
+      price:c.price, color:'var(--pu)'
+    });
+  });
+
+  // 4. Better ballast opportunities vs current ballasts
+  const ballastScores=positions.filter(p=>p.type==='BALLAST').map(p=>{
+    const q=quotes[p.ticker]; return q?scorePosition(q,p).score:5;
+  });
+  const avgBallast=ballastScores.length?ballastScores.reduce((a,b)=>a+b,0)/ballastScores.length:5;
+
+  ballastResults.slice(0,2).filter(r=>r.score>avgBallast+1.5).forEach(c=>{
+    opps.push({
+      type:'BALLAST_OPP', priority:3,
+      ticker:c.symbol, title:`🏛 Better Ballast: ${c.symbol} (${c.score.toFixed(1)}/10)`,
+      desc:`${c.reasons[0]||'Quality compounder'} — stronger ballast profile than current holdings.`,
+      price:c.price, color:'var(--g)'
+    });
+  });
+
+  // 5. Routing signal change
+  const astsPrice=quotes['ASTS']?.price||portfolio.asts_price;
+  const routing=getRouting(astsPrice,portfolio.mortgage_balance);
+  if(routing.label.includes('below $65')){
+    opps.push({
+      type:'ROUTING', priority:1,
+      ticker:'ASTS', title:'📍 Premium Routing: ASTS Dip Mode',
+      desc:`ASTS at $${astsPrice.toFixed(2)} — route 80% of premium to ASTS shares if thesis intact.`,
+      price:astsPrice, color:'var(--g)'
+    });
+  }
+
+  return opps.sort((a,b)=>a.priority-b.priority);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SENTIMENT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function sentimentSignal(data){
+  let score=0; const reasons=[];
+  const neg=['warning','miss','disappoints','cuts','slumps','fails','lawsuit','fraud','recall','downgrade'];
+  const pos=['beats','surges','wins','awarded','partnership','record','raises','upgraded','accelerates','breakthrough'];
+
+  (data.grades||[]).slice(0,3).forEach(g=>{
+    const a=(g.action||'').toLowerCase();
+    if(a.includes('upgrade')||a.includes('initiated')){score+=1;reasons.push(g.gradingCompany+': upgraded to '+g.newGrade);}
+    else if(a.includes('downgrade')){score-=1;reasons.push(g.gradingCompany+': downgraded to '+g.newGrade);}
+  });
+
+  (data.news||[]).slice(0,5).forEach(n=>{
+    const t=(n.title||'').toLowerCase();
+    if(pos.some(w=>t.includes(w)))score+=0.5;
+    if(neg.some(w=>t.includes(w)))score-=0.5;
+  });
+
+  const ls=(data.sentiment||[])[0];
+  if(ls){
+    const ss=ls.stocktwitsSentiment||ls.twitterSentiment||0;
+    if(ss>0.65){score+=0.5;reasons.push(`Social: bullish ${(ss*100).toFixed(0)}%`);}
+    else if(ss<0.4&&ss>0){score-=0.5;reasons.push(`Social: bearish ${(ss*100).toFixed(0)}%`);}
+  }
+
+  const clamped=Math.max(-2,Math.min(2,score));
+  let signal='neutral';
+  if(clamped>=1)signal='bullish';
+  else if(clamped<=-1)signal='bearish';
+  else if(Math.abs(clamped)>0.3)signal='mixed';
+  return{signal,reasons,rawScore:clamped,adjustment:clamped*0.25};
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AUTO ANALYZE — runs on open + manual trigger
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function autoRun(){
+  if(analyzing||!fmpKey)return;
+  analyzing=true; setBtn(true);
+  toast('Analyzing positions + market…','info');
+
+  try{
+    // 1. Fetch live quotes for all watchlist tickers
+    const tickers=POSITIONS.map(p=>p.ticker);
+    const quotes=await fetchQuotes(tickers);
+    Object.assign(liveQuotes,quotes);
+    if(quotes.ASTS)portfolio.asts_price=quotes.ASTS.price;
+    portfolio.last_updated=tod();
+
+    // 2. Quick background screen — run both pipelines if stale
+    if(!lastScreen||Date.now()-new Date(lastScreen)>3600000){
+      toast('Running dual-pipeline screen…','info');
+      // Asymmetric pipeline
+      const rawA=await runScreener(ASYMMETRIC_PRESETS[0].params);
+      const topA=rawA.slice(0,20).map(r=>r.symbol);
+      if(topA.length){
+        const sqA=await fetchQuotes(topA);
+        screenRes=rawA.slice(0,20).map(r=>{
+          const q=sqA[r.symbol]||{};
+          const merged={...r,...q,symbol:r.symbol};
+          const {score,reasons,type}=scoreAsymmetric(merged);
+          return{...merged,score,reasons,pipelineType:'ASYMMETRIC'};
+        }).sort((a,b)=>b.score-a.score);
+      }
+      // Ballast pipeline
+      const rawB=await runScreener(BALLAST_PRESETS[0].params);
+      const topB=rawB.slice(0,20).map(r=>r.symbol);
+      if(topB.length){
+        const sqB=await fetchQuotes(topB);
+        screenBallast=rawB.slice(0,20).map(r=>{
+          const q=sqB[r.symbol]||{};
+          const merged={...r,...q,symbol:r.symbol};
+          const {score,reasons,type}=scoreBallast(merged);
+          return{...merged,score,reasons,pipelineType:'BALLAST'};
+        }).sort((a,b)=>b.score-a.score);
+      }
+      lastScreen=new Date().toISOString();
+      localStorage.setItem('orb3_last_screen',lastScreen);
+    }
+
+    // 3. Detect opportunities across both pipelines
+    opportunities=detectOpportunities(POSITIONS,liveQuotes,screenRes,screenBallast);
+
+    save();
+    lastAnalyze=new Date().toLocaleString();
+    localStorage.setItem('orb3_last_analyze',lastAnalyze);
+
+    const astsPrice=liveQuotes['ASTS']?.price||portfolio.asts_price;
+    toast(`Analysis complete — ASTS $${astsPrice.toFixed(2)} · ${opportunities.length} signal${opportunities.length!==1?'s':''}`, opportunities.length?'warn':'ok');
+    render();
+  }catch(e){
+    console.error(e);
+    toast('Fetch failed — check FMP key','err');
+  }finally{
+    analyzing=false; setBtn(false);
+  }
+}
+
+async function runScreen(preset){
+  if(screening||!fmpKey){toast(fmpKey?'Already screening…':'Add FMP key in Settings','warn');return;}
+  screening=true;
+  activeScreenType=preset.type||'ASYMMETRIC';
+  toast(`Running ${activeScreenType} screen: ${preset.name}…`,'info');
+  try{
+    const raw=await runScreener(preset.params);
+    const topTickers=raw.slice(0,30).map(r=>r.symbol);
+    const sq=await fetchQuotes(topTickers);
+    const scored=raw.slice(0,30).map(r=>{
+      const q=sq[r.symbol]||{};
+      const merged={...r,...q,symbol:r.symbol};
+      const result=activeScreenType==='BALLAST'?scoreBallast(merged):scoreAsymmetric(merged);
+      return{...merged,...result,pipelineType:activeScreenType};
+    }).sort((a,b)=>b.score-a.score);
+
+    if(activeScreenType==='BALLAST'){
+      screenBallast=scored;
+      localStorage.setItem('orb3_screen_b',JSON.stringify(screenBallast));
+    } else {
+      screenRes=scored;
+      localStorage.setItem('orb3_screen',JSON.stringify(screenRes));
+    }
+    lastScreen=new Date().toISOString();
+    localStorage.setItem('orb3_last_screen',lastScreen);
+    localStorage.setItem('orb3_screen_type',activeScreenType);
+    toast(`${preset.name}: ${raw.length} stocks found, top ${Math.min(30,raw.length)} scored`);
+    render();
+  }catch(e){toast('Screen failed — check FMP key','err');console.error(e);}
+  finally{screening=false;}
+}
+
+async function loadIntel(ticker){
+  if(intelLoading)return;
+  intelLoading=true; intelTicker=ticker; render();
+  try{
+    const d=await fetchIntelData(ticker);
+    intelCache[ticker]=d;
+    localStorage.setItem('orb3_intel',JSON.stringify(intelCache));
+    toast(`Intel loaded for ${ticker}`);
+  }catch{toast('Intel fetch failed','err');}
+  intelLoading=false; render();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ROUTING + TABS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function showTab(id){
+  currentTab=id;
+  const tabs=['command','positions','screen','intel','mortgage','settings'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.className='tab'+(tabs[i]===id?' on':''));
+  render();
+}
+
+function render(){
+  const el=document.getElementById('page-content');
+  if(currentTab==='command')el.innerHTML=renderCommand();
+  else if(currentTab==='positions')el.innerHTML=renderPositions();
+  else if(currentTab==='screen')el.innerHTML=renderScreen();
+  else if(currentTab==='intel')el.innerHTML=renderIntel();
+  else if(currentTab==='mortgage')el.innerHTML=renderMortgage();
+  else if(currentTab==='settings')el.innerHTML=renderSettings();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMMAND TAB — the dynamic brain
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function renderCommand(){
+  const pv=portfolio.asts_shares*portfolio.asts_price;
+  const gap=Math.max(0,portfolio.mortgage_balance-pv);
+  const pct=Math.min((pv/portfolio.mortgage_balance)*100,100);
+  const routing=getRouting(portfolio.asts_price,portfolio.mortgage_balance);
+  const res=portfolio.reserve_balance||10000;
+
+  let h='';
+
+  // API key prompt
+  if(!fmpKey){
+    h+=`<div class="card accent-pu" style="text-align:center;padding:24px">
+      <div class="disp" style="font-size:18px;color:var(--pu);margin-bottom:8px">API Key Required</div>
+      <p class="serif" style="color:var(--t2);margin-bottom:14px;line-height:1.6">Add your FMP API key in Settings to enable live prices, dynamic screening, and opportunity detection.</p>
+      <button class="btn btn-g" onclick="showTab('settings')">Go to Settings →</button>
+    </div>`;
+    return h;
+  }
+
+  // Last analysis time
+  if(lastAnalyze){
+    h+=`<div style="font-size:9px;color:var(--t3);text-align:right;margin-bottom:10px;font-family:var(--mono)">Last analyzed: ${lastAnalyze} · ${opportunities.length} signal${opportunities.length!==1?'s':''} active</div>`;
+  }
+
+  // PRIMARY ACTION — the most important thing right now
+  if(opportunities.length>0){
+    const top=opportunities[0];
+    h+=`<div class="priority-banner">
+      <div style="font-size:9px;color:var(--g);letter-spacing:.15em;margin-bottom:8px;font-family:var(--sans);font-weight:600">PRIMARY SIGNAL</div>
+      <div class="disp" style="font-size:20px;color:${top.color};margin-bottom:6px">${top.title}</div>
+      <div style="font-size:12px;color:var(--t1);line-height:1.6;margin-bottom:12px">${top.desc}</div>
+      ${top.price?`<div style="font-size:11px;color:var(--t2)">${top.ticker} @ $${parseFloat(top.price).toFixed(2)}</div>`:''}
+    </div>`;
+  } else if(lastAnalyze) {
+    h+=`<div class="priority-banner" style="border-color:var(--g)33">
+      <div style="font-size:9px;color:var(--g);letter-spacing:.15em;margin-bottom:8px;font-family:var(--sans);font-weight:600">STATUS</div>
+      <div class="disp" style="font-size:20px;color:var(--g);margin-bottom:6px">✓ All Clear</div>
+      <div style="font-size:12px;color:var(--t1);line-height:1.6">No triggers fired. No deterioration detected. No screener result significantly outscores your current positions.</div>
+    </div>`;
+  } else {
+    h+=`<div class="priority-banner" style="border-color:var(--pu)33;cursor:pointer" onclick="autoRun()">
+      <div class="disp" style="font-size:18px;color:var(--pu);margin-bottom:6px">Tap Analyze to Start</div>
+      <div class="serif" style="color:var(--t2);line-height:1.6">Orbital fetches live prices, scores your positions, screens for better opportunities, and surfaces the highest-priority action.</div>
+    </div>`;
+  }
+
+  // Additional signals
+  if(opportunities.length>1){
+    h+=`<div style="font-size:9px;color:var(--t2);letter-spacing:.15em;margin-bottom:8px;font-family:var(--sans);font-weight:600;text-transform:uppercase">Additional Signals (${opportunities.length-1})</div>`;
+    opportunities.slice(1,4).forEach(opp=>{
+      h+=`<div class="opp-alert" style="border-color:${opp.color}44;background:${opp.color}08">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div>
+            <div style="font-size:12px;color:${opp.color};font-family:var(--sans);font-weight:600;margin-bottom:4px">${opp.title}</div>
+            <div style="font-size:11px;color:var(--t1);line-height:1.5">${opp.desc}</div>
+          </div>
+          ${opp.price?`<div style="font-size:11px;color:var(--t2);flex-shrink:0">$${parseFloat(opp.price).toFixed(2)}</div>`:''}
+        </div>
+      </div>`;
+    });
+  }
+
+  // Quick stats row
+  h+=`<div class="g2" style="margin-top:4px;margin-bottom:10px">
+    <div class="stat"><div class="label">ASTS Position</div><div class="val" style="color:var(--g)">${fmt(pv)}</div><div class="sub">${portfolio.asts_shares.toLocaleString()} shares @ $${portfolio.asts_price}</div></div>
+    <div class="stat"><div class="label">Gap to Close</div><div class="val" style="color:var(--y)">${fmt(gap)}</div><div class="sub">portfolio vs mortgage</div></div>
+  </div>`;
+
+  // Progress bar
+  h+=`<div class="card" style="margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span class="label">Portfolio vs Mortgage Target</span><span style="font-size:10px;color:var(--t2)">${pct.toFixed(1)}%</span></div>
+    <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--g),var(--pu))"></div></div>
+  </div>`;
+
+  // Live prices
+  const liveTickers=POSITIONS.filter(p=>liveQuotes[p.ticker]);
+  if(liveTickers.length){
+    h+=`<div class="card" style="margin-bottom:10px">
+      <div class="label" style="margin-bottom:8px">Live Prices</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px">`;
+    liveTickers.forEach(p=>{
+      const q=liveQuotes[p.ticker];
+      const chg=q.changesPercentage||0;
+      h+=`<div style="min-width:80px">
+        <div style="font-family:var(--sans);font-size:11px;color:var(--t2);margin-bottom:2px">${p.ticker}</div>
+        <div style="font-family:var(--sans);font-weight:700;font-size:15px;color:${chg>=0?'var(--g)':'var(--r)'}">$${parseFloat(q.price||0).toFixed(2)}</div>
+        <div style="font-size:9px;color:${chg>=0?'var(--g)':'var(--r)'}">${fmtP(chg)}</div>
+      </div>`;
+    });
+    h+='</div></div>';
+  }
+
+  // Routing
+  h+=`<div class="card accent-g" style="border-color:${routing.c}44">
+    <div class="label" style="margin-bottom:7px">Premium Routing — ASTS @ $${portfolio.asts_price}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px">`;
+  [['MORTGAGE',routing.m,'var(--g)'],['INDEX',routing.i,'var(--pu)'],['ASTS',routing.a,'var(--y)'],['RESERVE',routing.r,'var(--t3)']].filter(([,v])=>v>0).forEach(([l,v,c])=>{
+    h+=`<span style="background:var(--bg3);border-radius:5px;padding:3px 9px;font-size:10px;display:inline-flex;gap:4px"><span style="color:var(--t2)">${l}</span><span style="color:${c};font-weight:600">${v}%</span><span style="color:var(--t3);font-size:9px">$${Math.round(portfolio.annual_premium_net*v/100).toLocaleString()}/yr</span></span>`;
+  });
+  h+=`</div><div class="serif" style="font-size:11px;color:${routing.c}">${routing.label}</div></div>`;
+
+  // Reserve
+  h+=`<div class="card ${res<8000?'accent-y':'accent-g'}" style="margin-bottom:10px">
+    <div class="label">Reserve (Ally HYSA)</div>
+    <div class="disp" style="font-size:22px;color:${res>=8000?'var(--g)':res>=5000?'var(--y)':'var(--r)'};margin-bottom:4px">${fmt(res)}</div>
+    <div style="font-size:10px;color:var(--t2)">${res<8000?'⚠ Below $8K floor — refill before routing premium elsewhere':'Dip-buying fund ready · 3.1% APY'}</div>
+  </div>`;
+
+  // Quick edit
+  h+=`<div class="card">
+    <div class="label" style="margin-bottom:10px">Update Portfolio</div>
+    <div class="g2" style="gap:8px;margin-bottom:8px">`;
+  [['asts_shares','ASTS Shares'],['asts_price','ASTS Price'],['mortgage_balance','Mortgage ($)'],['reserve_balance','Reserve ($)']].forEach(([k,l])=>{
+    h+=`<div><div class="label" style="margin-bottom:3px">${l}</div><input type="number" inputmode="decimal" value="${portfolio[k]||0}" onchange="updatePort('${k}',this.value)"></div>`;
+  });
+  h+=`</div><div style="font-size:9px;color:var(--t3)">Updated: ${portfolio.last_updated}</div></div>`;
+
+  return h;
+}
+
+function updatePort(k,v){portfolio[k]=parseFloat(v)||0;portfolio.last_updated=tod();save();render();}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// POSITIONS TAB
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function renderPositions(){
+  let h='';
+  const typeOrder=['CORE','SATELLITE','BALLAST','WATCH'];
+  const typeColors={CORE:'var(--g)',SATELLITE:'var(--y)',BALLAST:'var(--pu)',WATCH:'var(--t3)'};
+  const healthColors={strong:'var(--g)',ok:'var(--g1)',watch:'var(--y)',weak:'var(--r)',unknown:'var(--t3)'};
+
+  typeOrder.forEach(type=>{
+    const items=POSITIONS.filter(p=>p.type===type);
+    if(!items.length)return;
+    h+=`<div style="font-size:9px;color:${typeColors[type]};letter-spacing:.15em;margin:${type==='CORE'?0:12}px 0 8px;font-family:var(--sans);font-weight:600;text-transform:uppercase">${type}</div>`;
+
+    items.forEach(pos=>{
+      const q=liveQuotes[pos.ticker];
+      const {score,health,reasons}=q?scorePosition(q,pos):{score:5,health:'unknown',reasons:[]};
+      const isOpen=openRow===pos.ticker+'_pos';
+      const chg=q?.changesPercentage||0;
+      const hi=q?.yearHigh||null;
+      const dfh=hi&&q?.price?((hi-q.price)/hi)*100:null;
+
+      h+=`<div class="row ${isOpen?'open':''}">
+        <div class="row-hdr" onclick="openRow=openRow==='${pos.ticker}_pos'?null:'${pos.ticker}_pos';render()">
+          <div style="display:flex;gap:10px;flex:1;min-width:0;align-items:flex-start">
+            <div class="health-dot" style="background:${healthColors[health]};margin-top:4px"></div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+                <span style="font-family:var(--sans);font-weight:700;font-size:15px;color:${typeColors[type]}">${pos.ticker}</span>
+                <span style="font-size:9px;color:${typeColors[type]};background:${typeColors[type]}18;padding:2px 6px;border-radius:3px;font-family:var(--sans);font-weight:500">${type}</span>
+              </div>
+              <div style="font-size:10px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${pos.thesis}</div>
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;margin-left:10px">
+            ${q?`<div style="font-family:var(--sans);font-weight:700;font-size:16px;color:${chg>=0?'var(--g)':'var(--r)'}">$${parseFloat(q.price).toFixed(2)}</div>
+            <div style="font-size:9px;color:${chg>=0?'var(--g)':'var(--r)'}">${fmtP(chg)}</div>
+            ${dfh!==null?`<div style="font-size:9px;color:var(--t3)">↓${dfh.toFixed(0)}% hi</div>`:''}`:
+            `<div style="font-size:11px;color:var(--t3)">—</div>`}
+          </div>
+          <div style="margin-left:8px;flex-shrink:0;display:flex;align-items:center;gap:5px">
+            <div class="score-wrap" style="width:60px">
+              <div class="score-bar"><div class="score-fill" style="width:${score*10}%;background:${score>=7?'var(--g)':score>=5?'var(--y)':'var(--r)'}"></div></div>
+              <div class="score-num" style="color:${score>=7?'var(--g)':score>=5?'var(--y)':'var(--r)'}">${score.toFixed(1)}</div>
+            </div>
+            <span style="font-size:10px;color:var(--t3)">${isOpen?'▲':'▼'}</span>
+          </div>
+        </div>
+        <div class="row-body">
+          ${q?`
+          <div class="g3" style="margin-bottom:12px">
+            <div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center">
+              <div class="label" style="margin-bottom:2px">Mkt Cap</div>
+              <div style="font-family:var(--sans);font-weight:600;font-size:13px">${fmtN(q.marketCap)}</div>
+            </div>
+            <div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center">
+              <div class="label" style="margin-bottom:2px">Volume</div>
+              <div style="font-family:var(--sans);font-weight:600;font-size:13px">${fmtN(q.volume)}</div>
+            </div>
+            <div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center">
+              <div class="label" style="margin-bottom:2px">P/E</div>
+              <div style="font-family:var(--sans);font-weight:600;font-size:13px">${q.pe?q.pe.toFixed(1):'—'}</div>
+            </div>
+          </div>
+          ${hi?`
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-bottom:4px">
+              <span>$${(q.yearLow||0).toFixed(2)} 52W low</span><span>$${hi.toFixed(2)} 52W high</span>
+            </div>
+            <div class="prog-wrap"><div class="prog-fill" style="width:${Math.min(((q.price-(q.yearLow||0))/(hi-(q.yearLow||1)))*100,100)}%;background:${typeColors[type]}"></div></div>
+          </div>`:''}`:
+          '<p style="color:var(--t2);font-size:11px;margin-bottom:10px">Tap Analyze to fetch live data for this position.</p>'}
+          ${reasons.length?`<div class="label" style="margin-bottom:5px">Position Assessment</div>
+          ${reasons.map(r=>`<div style="font-size:10px;color:var(--t2);margin-bottom:3px">→ ${r}</div>`).join('')}<div class="sep"></div>`:''}
+          <div class="label" style="margin-bottom:5px">Thesis</div>
+          <div style="font-size:11px;color:var(--t1);line-height:1.7">${pos.thesis}</div>
+          <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="intelTicker='${pos.ticker}';showTab('intel')">View Intel →</button>
+        </div>
+      </div>`;
+    });
+  });
+
+  // Price triggers
+  h+=`<div style="font-size:9px;color:var(--t2);letter-spacing:.15em;margin:14px 0 8px;font-family:var(--sans);font-weight:600;text-transform:uppercase">Price Triggers</div>
+  <div class="card">`;
+  PRICE_TRIGGERS.forEach((t,i)=>{
+    const q=liveQuotes[t.ticker];
+    const price=q?.price;
+    const fired=price&&(t.dir==='above'?price>=t.price:price<=t.price);
+    h+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:${i<PRICE_TRIGGERS.length-1?'1px solid var(--b)':'none'};gap:8px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;color:${fired?'var(--r)':'var(--t1)'};font-family:var(--sans);font-weight:${fired?600:400}">${t.emoji} ${t.ticker} ${t.dir==='above'?'≥':'<'} $${t.price}</div>
+        <div style="font-size:9px;color:var(--t3);margin-top:1px">${t.action}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        ${price?`<div style="font-size:10px;color:var(--t2)">Now $${price.toFixed(2)}</div>`:''}
+        <div style="font-size:16px;color:${fired?'var(--r)':'var(--b2)'}">${fired?'⚡':'○'}</div>
+      </div>
+    </div>`;
+  });
+  h+='</div>';
+  return h;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SCREEN TAB
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function renderScreen(){
+  const viewingBallast=activeScreenType==='BALLAST';
+  const activeResults=viewingBallast?screenBallast:screenRes;
+  let h='';
+
+  h+=`<p class="serif" style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.6">
+    Two scoring pipelines — neither uses analyst ratings as input. Asymmetric scored on entry quality and re-rating potential. Ballast scored on moat quality, valuation, and stability.
+  </p>`;
+
+  if(lastScreen){
+    h+=`<div style="font-size:9px;color:var(--t3);margin-bottom:12px;font-family:var(--mono)">
+      Last screened: ${new Date(lastScreen).toLocaleString()} · 
+      ${screenRes.length} asymmetric · ${screenBallast.length} ballast results
+    </div>`;
+  }
+
+  // Pipeline toggle
+  h+=`<div style="display:flex;background:var(--bg3);border-radius:8px;padding:3px;margin-bottom:14px;gap:3px">
+    <button class="btn ${!viewingBallast?'btn-g':'btn-ghost'}" onclick="activeScreenType='ASYMMETRIC';render();" style="flex:1;border-radius:6px;${!viewingBallast?'':'border:none'}">
+      ⚡ Asymmetric
+    </button>
+    <button class="btn ${viewingBallast?'btn-g':'btn-ghost'}" onclick="activeScreenType='BALLAST';render();" style="flex:1;border-radius:6px;${viewingBallast?'':'border:none'}">
+      🏛 Ballast
+    </button>
+  </div>`;
+
+  // What this pipeline looks for
+  if(!viewingBallast){
+    h+=`<div class="card" style="margin-bottom:12px;border-color:var(--pu)33;padding:10px 14px">
+      <div class="label" style="color:var(--pu);margin-bottom:5px">ASYMMETRIC PIPELINE — What It Scores</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${[['↓52W High','Entry quality — deeper = more asymmetry'],['Market Cap','$50M–$8B sweet spot for re-rating'],['Beta 1.5+','Volatility creates dip-buy entries'],['Sector','Tech/Healthcare/Industrials — moat potential'],['Volume','Must be liquid enough to trade'],['Not held','Penalizes what you already own']].map(([k,v])=>`
+        <div style="background:var(--bg3);border-radius:5px;padding:4px 8px">
+          <span style="color:var(--pu);font-size:9px;font-family:var(--sans);font-weight:600">${k}</span>
+          <span style="color:var(--t3);font-size:9px"> · ${v}</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  } else {
+    h+=`<div class="card" style="margin-bottom:12px;border-color:var(--g)33;padding:10px 14px">
+      <div class="label" style="color:var(--g);margin-bottom:5px">BALLAST PIPELINE — What It Scores</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${[['Market Cap','$5B+ for anchor stability'],['P/E Ratio','Undervalued for growth = bonus points'],['↓52W High','Even quality is better bought on weakness'],['Beta 0.5–1.3','Dampens portfolio volatility'],['Volume','5M+ = institutional grade liquidity'],['Sector','Durable structural demand sectors']].map(([k,v])=>`
+        <div style="background:var(--bg3);border-radius:5px;padding:4px 8px">
+          <span style="color:var(--g);font-size:9px;font-family:var(--sans);font-weight:600">${k}</span>
+          <span style="color:var(--t3);font-size:9px"> · ${v}</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  // Preset buttons
+  const presets=viewingBallast?BALLAST_PRESETS:ASYMMETRIC_PRESETS;
+  h+=`<div class="g2" style="margin-bottom:14px">`;
+  presets.forEach(p=>{
+    h+=`<div class="card" style="padding:12px">
+      <div style="font-size:16px;margin-bottom:4px">${p.icon}</div>
+      <div style="font-family:var(--sans);font-weight:700;font-size:12px;color:${viewingBallast?'var(--g)':'var(--pu)'};margin-bottom:3px">${p.name}</div>
+      <div style="font-size:10px;color:var(--t2);margin-bottom:8px;line-height:1.4">${p.desc}</div>
+      <button class="btn ${viewingBallast?'btn-g':'btn-ghost'} btn-sm" style="width:100%;${!viewingBallast?'border-color:var(--pu)44;color:var(--pu)':''}" onclick="runScreen(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+        ${screening?'<span class="spin">⟳</span>':''} Run
+      </button>
+    </div>`;
+  });
+  h+='</div>';
+
+  // Custom screener
+  h+=`<div class="card" style="margin-bottom:14px">
+    <div class="label" style="margin-bottom:10px">Custom ${viewingBallast?'Ballast':'Asymmetric'} Screen</div>
+    <div class="g2" style="gap:8px;margin-bottom:10px">
+      <div><div class="label" style="margin-bottom:3px">Min Cap ($M)</div><input type="number" id="s-mcmin" value="${viewingBallast?5000:50}"></div>
+      <div><div class="label" style="margin-bottom:3px">Max Cap ($M)</div><input type="number" id="s-mcmax" value="${viewingBallast?500000:8000}"></div>
+      <div><div class="label" style="margin-bottom:3px">${viewingBallast?'Min Beta':'Min Beta'}</div><input type="number" id="s-beta" value="${viewingBallast?0.5:1.3}" step="0.1"></div>
+      <div><div class="label" style="margin-bottom:3px">Min Volume</div><input type="number" id="s-vol" value="${viewingBallast?500000:100000}"></div>
+      <div><div class="label" style="margin-bottom:3px">Sector</div>
+        <select id="s-sector">
+          <option value="">All Sectors</option>
+          <option>Technology</option><option>Healthcare</option>
+          <option>Industrials</option><option>Energy</option>
+          <option>Consumer Cyclical</option><option>Consumer Defensive</option>
+          <option>Financial Services</option><option>Communication Services</option>
+        </select>
+      </div>
+      <div><div class="label" style="margin-bottom:3px">Exchange</div>
+        <select id="s-exch"><option value="">All</option><option value="NASDAQ">NASDAQ</option><option value="NYSE">NYSE</option></select>
+      </div>
+    </div>
+    <button class="btn btn-y" onclick="runCustomScreen()" style="width:100%">Run Custom Screen</button>
+  </div>`;
+
+  // Results table
+  if(activeResults.length){
+    const pipeColor=viewingBallast?'var(--g)':'var(--pu)';
+    h+=`<div class="label" style="margin-bottom:8px">
+      ${viewingBallast?'🏛 Ballast':'⚡ Asymmetric'} Results — ${activeResults.length} scored
+    </div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr>
+        <th>Ticker</th><th>Price</th><th>Chg%</th><th>Cap</th>
+        <th>${viewingBallast?'P/E':'Beta'}</th>
+        <th>↓52W</th><th>Score</th>
+      </tr></thead><tbody>`;
+    activeResults.slice(0,20).forEach(r=>{
+      const chg=r.changesPercentage||0;
+      const hi=r.yearHigh||r.price||1;
+      const dfh=hi>0?((hi-r.price)/hi)*100:0;
+      const sc=r.score||0;
+      const scColor=sc>=7?'var(--g)':sc>=5?'var(--y)':'var(--r)';
+      const metricVal=viewingBallast?(r.pe?r.pe.toFixed(1):'—'):(r.beta||0).toFixed(1);
+      h+=`<tr onclick="intelTicker='${r.symbol}';showTab('intel')" style="cursor:pointer">
+        <td style="color:${pipeColor};font-family:var(--sans);font-weight:700">${r.symbol}</td>
+        <td>$${parseFloat(r.price||0).toFixed(2)}</td>
+        <td style="color:${chg>=0?'var(--g)':'var(--r)'}">${fmtP(chg)}</td>
+        <td style="color:var(--t2)">${fmtN(r.marketCap)}</td>
+        <td style="color:var(--t2)">${metricVal}</td>
+        <td style="color:${dfh>30?'var(--g)':'var(--t2)'}">${dfh.toFixed(0)}%</td>
+        <td><div class="score-wrap">
+          <div class="score-bar" style="width:32px"><div class="score-fill" style="width:${sc*10}%;background:${scColor}"></div></div>
+          <span class="score-num" style="color:${scColor};font-size:12px">${sc.toFixed(1)}</span>
+        </div></td>
+      </tr>`;
+    });
+    h+='</tbody></table></div>';
+    h+=`<div style="font-size:9px;color:var(--t3);margin-top:6px">Tap any row to fetch Intel for that ticker</div>`;
+
+    // Top 3 picks detail
+    if(activeResults.slice(0,3).some(r=>r.reasons?.length)){
+      h+=`<div style="font-size:9px;color:var(--t2);letter-spacing:.15em;margin:14px 0 8px;font-family:var(--sans);font-weight:600;text-transform:uppercase">Top Picks — Scoring Detail</div>`;
+      activeResults.slice(0,3).forEach((r,i)=>{
+        h+=`<div class="card" style="margin-bottom:8px;border-color:${pipeColor}33">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-family:var(--sans);font-weight:700;color:${pipeColor}">#${i+1} ${r.symbol}</span>
+            <span style="font-family:var(--sans);font-weight:700;font-size:16px;color:${r.score>=7?'var(--g)':r.score>=5?'var(--y)':'var(--r)'}">${r.score.toFixed(1)}/10</span>
+          </div>
+          ${(r.reasons||[]).map(reason=>`<div style="font-size:10px;color:var(--t2);margin-bottom:3px">→ ${reason}</div>`).join('')}
+          <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="intelTicker='${r.symbol}';showTab('intel')">Fetch Intel →</button>
+        </div>`;
+      });
+    }
+  } else {
+    h+=`<div class="card" style="text-align:center;padding:28px">
+      <div style="font-size:20px;margin-bottom:8px">${viewingBallast?'🏛':'⚡'}</div>
+      <div style="font-size:12px;color:var(--t3);line-height:1.8">
+        No ${viewingBallast?'ballast':'asymmetric'} results yet.<br>
+        Select a preset above to run the screen.<br>
+        <span class="serif" style="color:var(--t2)">Auto-screens both pipelines on Analyze.</span>
+      </div>
+    </div>`;
+  }
+
+  return h;
+}
+
+function runCustomScreen(){
+  const viewingBallast=activeScreenType==='BALLAST';
+  const preset={
+    id:'custom', name:'Custom', icon:'⚙',
+    type:activeScreenType,
+    desc:'Custom parameters',
+    params:{
+      marketCapMoreThan:(parseInt(document.getElementById('s-mcmin')?.value)||50)*1e6,
+      marketCapLessThan:(parseInt(document.getElementById('s-mcmax')?.value)||8000)*1e6,
+      betaMoreThan:parseFloat(document.getElementById('s-beta')?.value)||1.3,
+      volumeMoreThan:parseInt(document.getElementById('s-vol')?.value)||100000,
+      isEtf:false, limit:40,
+      ...(document.getElementById('s-sector')?.value?{sector:document.getElementById('s-sector').value}:{}),
+      ...(document.getElementById('s-exch')?.value?{exchange:document.getElementById('s-exch').value}:{})
+    }
+  };
+  runScreen(preset);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INTEL TAB
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function renderIntel(){
+  const tickers=POSITIONS.map(p=>p.ticker);
+  const data=intelCache[intelTicker]||null;
+  const ss=data?sentimentSignal(data):null;
+  const sigC={bullish:'var(--g)',bearish:'var(--r)',mixed:'var(--y)',neutral:'var(--t3)'};
+  const sigI={bullish:'↑',bearish:'↓',mixed:'↕',neutral:'—'};
+  const neg=['warning','miss','disappoints','cuts','slumps','fails','lawsuit','fraud','recall','downgrade'];
+  const pos2=['beats','surges','wins','awarded','partnership','record','raises','upgraded','accelerates'];
+
+  let h=`<p class="serif" style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.6">News, grades, earnings surprises, social sentiment. Context layer — fundamentals first, intel second.</p>`;
+
+  // Ticker selector
+  h+=`<div class="card" style="margin-bottom:12px">
+    <div class="label" style="margin-bottom:8px">Ticker</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">`;
+  tickers.forEach(t=>{
+    const tc={CORE:'var(--g)',SATELLITE:'var(--y)',BALLAST:'var(--pu)',WATCH:'var(--t3)'}[POSITIONS.find(p=>p.ticker===t)?.type]||'var(--t3)';
+    const isA=t===intelTicker;
+    h+=`<button class="btn ${isA?'btn-g':'btn-ghost'} btn-sm" onclick="intelTicker='${t}';render();" style="${isA?'':'border-color:'+tc+'44;color:'+tc}">${t}</button>`;
+  });
+  h+=`</div>
+    <button class="btn btn-y" onclick="loadIntel('${intelTicker}')" style="width:100%" ${intelLoading?'disabled':''}>
+      ${intelLoading?'<span class="spin">⟳</span> Fetching…':'⟳ Fetch Intel for '+intelTicker}
+    </button>
+  </div>`;
+
+  if(!data&&!intelLoading){h+=`<div class="card" style="text-align:center;padding:24px"><div style="color:var(--t3);font-size:12px;line-height:1.7">No intel loaded for ${intelTicker}.<br>Tap Fetch Intel above.</div></div>`;return h;}
+  if(intelLoading){h+=`<div class="card" style="text-align:center;padding:28px"><div class="spin" style="font-size:22px;color:var(--g)">⟳</div><div style="color:var(--t3);font-size:12px;margin-top:10px">Fetching…</div></div>`;return h;}
+
+  // Sentiment signal
+  if(ss){
+    const sc=sigC[ss.signal];
+    h+=`<div class="card" style="margin-bottom:10px;border-color:${sc}44">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div><div class="label" style="margin-bottom:5px">Sentiment Signal</div>
+          <div class="disp" style="font-size:22px;color:${sc}">${sigI[ss.signal]} ${ss.signal.toUpperCase()}</div>
+          <div style="font-size:10px;color:var(--t3);margin-top:3px">Score adjustment: ${ss.adjustment>=0?'+':''}${ss.adjustment.toFixed(2)}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="label">Raw</div>
+          <div class="disp" style="font-size:26px;color:${sc}">${ss.rawScore>=0?'+':''}${ss.rawScore.toFixed(1)}</div>
+        </div>
+      </div>
+      ${ss.reasons.length?`<div class="sep"></div>${ss.reasons.map(r=>`<div style="font-size:11px;color:var(--t2);margin-bottom:3px">→ ${r}</div>`).join('')}`:''}
+    </div>`;
+  }
+
+  // Grade changes
+  if(data.grades?.length){
+    h+=`<div class="card" style="margin-bottom:10px"><div class="label" style="margin-bottom:10px">Analyst Grade Changes</div>`;
+    data.grades.slice(0,5).forEach(g=>{
+      const a=(g.action||'').toLowerCase();
+      const col=a.includes('upgrade')||a.includes('initiated')?'var(--g)':a.includes('downgrade')?'var(--r)':'var(--y)';
+      h+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--b);gap:8px">
+        <div><div style="font-size:11px;color:var(--t)">${g.gradingCompany||'—'}</div>
+        <div style="font-size:10px;color:var(--t3)">${g.previousGrade||'—'} → <span style="color:${col}">${g.newGrade||'—'}</span></div></div>
+        <div style="text-align:right">
+          <div style="font-size:9px;color:${col};text-transform:uppercase;letter-spacing:.06em">${g.action||''}</div>
+          <div style="font-size:9px;color:var(--t3)">${g.date||''}</div>
+        </div>
+      </div>`;
+    });
+    h+='</div>';
+  }
+
+  // Grade summary
+  if(data.gradeSummary?.length){
+    const gs=data.gradeSummary[0];
+    const total=(gs.strongBuy||0)+(gs.buy||0)+(gs.hold||0)+(gs.sell||0)+(gs.strongSell||0);
+    if(total>0){
+      const bp=Math.round(((gs.strongBuy||0)+(gs.buy||0))/total*100);
+      const hp=Math.round((gs.hold||0)/total*100);
+      const sp=100-bp-hp;
+      h+=`<div class="card" style="margin-bottom:10px"><div class="label" style="margin-bottom:10px">Consensus (${total} analysts)</div>
+        <div class="g3">
+          <div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center"><div class="label" style="color:var(--g)">Buy</div><div class="disp" style="font-size:20px;color:var(--g)">${bp}%</div></div>
+          <div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center"><div class="label" style="color:var(--y)">Hold</div><div class="disp" style="font-size:20px;color:var(--y)">${hp}%</div></div>
+          <div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center"><div class="label" style="color:var(--r)">Sell</div><div class="disp" style="font-size:20px;color:var(--r)">${sp}%</div></div>
+        </div>
+        <div class="sep"></div>
+        <div style="font-size:10px;color:var(--t3)" class="serif">High Buy% on a beaten-down stock = potential catalyst. High Buy% near 52W high = sell-the-news risk.</div>
+      </div>`;
+    }
+  }
+
+  // Earnings surprises
+  if(data.surprises?.length){
+    h+=`<div class="card" style="margin-bottom:10px"><div class="label" style="margin-bottom:10px">Earnings Surprise History</div><table>
+      <thead><tr><th>Date</th><th>Est EPS</th><th>Actual</th><th>Surprise</th></tr></thead><tbody>`;
+    data.surprises.forEach(s=>{
+      const diff=s.actualEarningResult-s.estimatedEarning;
+      const pd=s.estimatedEarning!==0?(diff/Math.abs(s.estimatedEarning))*100:0;
+      const col=diff>=0?'var(--g)':'var(--r)';
+      h+=`<tr><td>${s.date||''}</td><td>$${parseFloat(s.estimatedEarning||0).toFixed(3)}</td><td style="color:${col}">$${parseFloat(s.actualEarningResult||0).toFixed(3)}</td><td style="color:${col};font-weight:600">${diff>=0?'+':''}${pd.toFixed(1)}%</td></tr>`;
+    });
+    const beats=data.surprises.filter(s=>s.actualEarningResult>=s.estimatedEarning).length;
+    h+=`</tbody></table><div style="font-size:10px;color:var(--t3);margin-top:8px">Beat rate: ${beats}/${data.surprises.length}</div></div>`;
+  }
+
+  // News
+  if(data.news?.length){
+    h+=`<div class="card" style="margin-bottom:10px"><div class="label" style="margin-bottom:10px">Recent News</div>`;
+    data.news.slice(0,6).forEach(n=>{
+      const t=n.title||'';
+      const isP=pos2.some(w=>t.toLowerCase().includes(w));
+      const isN=neg.some(w=>t.toLowerCase().includes(w));
+      const col=isP?'var(--g)':isN?'var(--r)':'var(--t)';
+      const dot=isP?'var(--g)':isN?'var(--r)':'var(--b2)';
+      h+=`<div style="display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--b);align-items:flex-start">
+        <div style="width:6px;height:6px;border-radius:50%;background:${dot};flex-shrink:0;margin-top:4px"></div>
+        <div style="flex:1;min-width:0"><div style="font-size:11px;color:${col};line-height:1.4;margin-bottom:2px">${t}</div>
+        <div style="font-size:9px;color:var(--t3)">${n.publishedDate||''} · ${n.site||''}</div></div>
+        ${n.url?`<a href="${n.url}" target="_blank" style="font-size:9px;color:var(--t3);flex-shrink:0;border:1px solid var(--b);padding:2px 6px;border-radius:3px;text-decoration:none">↗</a>`:''}
+      </div>`;
+    });
+    h+='</div>';
+  }
+
+  if(data.fetchedAt)h+=`<div style="font-size:9px;color:var(--t3);text-align:center;padding:6px">Fetched: ${new Date(data.fetchedAt).toLocaleString()}</div>`;
+  return h;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MORTGAGE TAB
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function renderMortgage(){
+  const yr5n=mortBal(portfolio.mortgage_balance,portfolio.monthly_payment,portfolio.mortgage_rate,5);
+  const yr5p=mortBal(portfolio.mortgage_balance,portfolio.monthly_payment,portfolio.mortgage_rate,5,portfolio.annual_premium_net*0.5);
+  let h=`<p class="serif" style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.6">Mortgage shrinks from both ends. Normal amortization reduces the target. Premium routing accelerates it.</p>`;
+
+  h+=`<div class="card accent-g" style="margin-bottom:10px">
+    <div class="label" style="margin-bottom:10px">Year 5 Projections</div>
+    <div class="g2">
+      <div style="background:var(--bg3);border-radius:7px;padding:10px">
+        <div class="label" style="margin-bottom:3px">Normal Payments</div>
+        <div class="disp" style="font-size:22px;color:var(--r)">${fmt(yr5n)}</div>
+        <div style="font-size:9px;color:var(--t3);margin-top:3px">ASTS needs $${Math.round(yr5n/(portfolio.asts_shares*0.825))}</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:7px;padding:10px">
+        <div class="label" style="margin-bottom:3px">+ 50% Premium</div>
+        <div class="disp" style="font-size:22px;color:var(--g)">${fmt(yr5p)}</div>
+        <div style="font-size:9px;color:var(--t3);margin-top:3px">ASTS needs $${Math.round(yr5p/(portfolio.asts_shares*0.825))} ✓</div>
+      </div>
+    </div>
+  </div>`;
+
+  h+=`<div class="card" style="margin-bottom:10px"><div class="label" style="margin-bottom:10px">Year by Year (50% premium)</div><div class="g4">`;
+  [1,2,3,4,5,6,8,10].forEach(yr=>{
+    const b=mortBal(portfolio.mortgage_balance,portfolio.monthly_payment,portfolio.mortgage_rate,yr,portfolio.annual_premium_net*0.5);
+    const an=Math.round(b/(portfolio.asts_shares*0.825));
+    h+=`<div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center">
+      <div class="label" style="margin-bottom:2px">Yr ${yr}</div>
+      <div class="disp" style="font-size:13px;color:var(--r)">${fmt(b)}</div>
+      <div style="font-size:8px;color:var(--t3);margin-top:2px">$${an} ASTS</div>
+    </div>`;
+  });
+  h+='</div></div>';
+
+  h+=`<div class="card" style="overflow-x:auto"><div class="label" style="margin-bottom:10px">Exit Scenarios (50% premium routing, 17.5% LTCG)</div><table>
+    <thead><tr><th>ASTS</th><th>Year</th><th>After Tax</th><th>Mortgage</th><th>Gap</th><th>Outcome</th></tr></thead><tbody>`;
+  [[100,3],[150,4],[200,4],[200,5],[240,5],[280,5],[300,5]].forEach(([price,yr])=>{
+    const at=portfolio.asts_shares*price*0.825;
+    const mb=mortBal(portfolio.mortgage_balance,portfolio.monthly_payment,portfolio.mortgage_rate,yr,portfolio.annual_premium_net*0.5);
+    const g=mb-at; const surplus=g<=0;
+    h+=`<tr>
+      <td style="color:var(--t);font-family:var(--sans);font-weight:600">$${price}</td>
+      <td style="color:var(--t2)">Yr ${yr}</td>
+      <td style="color:var(--g)">${fmt(at)}</td>
+      <td style="color:var(--r)">${fmt(mb)}</td>
+      <td style="color:${surplus?'var(--g)':Math.abs(g)<100000?'var(--y)':'var(--t2)'}">${surplus?'+':'-'}${fmt(Math.abs(g))}</td>
+      <td style="font-size:10px;color:${surplus?'var(--g)':Math.abs(g)<80000?'var(--y)':'var(--t2)'}">
+        ${surplus?'✓ Paid off':Math.abs(g)<80000?'Satellites close':fmt(g)+' short'}
+      </td>
+    </tr>`;
+  });
+  h+='</tbody></table></div>';
+
+  h+=`<div class="label" style="margin:14px 0 8px">Freedom Horizons</div>`;
+  [{n:1,c:'var(--g)',t:'Spouse Works Optional',d:'ASTS $200 → mortgage to $180-200K → your salary covers household. 4-6 years. 40-50% probability.'},
+   {n:2,c:'var(--y)',t:'You Work Optional',d:'Mortgage paid + $500K portfolio → bridge to pension. 10-12 years. 60-70% probability.'},
+   {n:3,c:'var(--pu)',t:'Complete Independence',d:'ASRS pension + SS + spouse = $106K+ guaranteed/yr. ~16 years to 80 ASRS points. 90%+ probability.'}
+  ].forEach(hz=>{
+    h+=`<div class="card" style="margin-bottom:8px;border-color:${hz.c}33;display:flex;gap:14px;align-items:flex-start">
+      <div class="disp" style="font-size:36px;color:${hz.c};flex-shrink:0;line-height:1">${hz.n}</div>
+      <div><div style="font-family:var(--sans);font-weight:600;font-size:13px;color:${hz.c};margin-bottom:4px">${hz.t}</div>
+      <div style="font-size:11px;color:var(--t2);line-height:1.6">${hz.d}</div></div>
+    </div>`;
+  });
+  return h;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SETTINGS TAB
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function renderSettings(){
+  return`<div>
+    <div class="card accent-g" style="margin-bottom:10px">
+      <div class="label" style="color:var(--g);margin-bottom:10px">FMP API Key</div>
+      <p class="serif" style="font-size:11px;color:var(--t2);line-height:1.6;margin-bottom:12px">Get free at financialmodelingprep.com. Key stored in your browser only — never sent anywhere except FMP's servers.</p>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input type="password" id="fmp-key" placeholder="Paste FMP API key…" value="${fmpKey}" style="flex:1">
+        <button class="btn btn-g" onclick="saveFmpKey()">Save</button>
+      </div>
+      ${fmpKey?`<div style="font-size:10px;color:var(--g)">✓ Key saved (${fmpKey.slice(0,8)}…)</div><button class="btn btn-ghost btn-sm" onclick="clearFmpKey()" style="margin-top:6px">Clear</button>`:'<div style="font-size:10px;color:var(--t3)">No key saved</div>'}
+    </div>
+
+    <div class="card" style="margin-bottom:10px">
+      <div class="label" style="margin-bottom:10px">Portfolio</div>
+      <div class="g2" style="gap:8px">
+        ${[['ASTS Shares',portfolio.asts_shares],['ASTS Price','$'+portfolio.asts_price],['Mortgage','$'+portfolio.mortgage_balance.toLocaleString()],['Reserve','$'+(portfolio.reserve_balance||10000).toLocaleString()],['Annual Premium','$'+portfolio.annual_premium_net.toLocaleString()],['Updated',portfolio.last_updated]].map(([l,v])=>`
+        <div style="background:var(--bg3);border-radius:6px;padding:8px">
+          <div class="label" style="margin-bottom:2px">${l}</div>
+          <div style="font-family:var(--sans);font-weight:600;font-size:13px">${v}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:10px">
+      <div class="label" style="margin-bottom:10px">How Orbital Works</div>
+      ${[
+        ['Analyze (auto on open)','Fetches live prices for all positions → re-scores each → runs background screen → detects opportunities → surfaces highest-priority action'],
+        ['Dynamic Scoring','Positions scored 0-10 continuously using live data. Screener results scored against same framework. Gap ≥1.5 points triggers rotation alert.'],
+        ['Screen (on demand)','FMP stock screener queries 40-50 candidates per preset. Top 25 get live quotes + scoring. Results persist until next screen.'],
+        ['Intel (on demand)','News + analyst grades + earnings surprises + social sentiment. Sentiment adds ±0.5 adjustment to fundamental score — never overrides it.'],
+        ['Opportunity Detection','Triggers fired, position deterioration, screener results significantly outscoring held positions, routing rule changes. All surfaced on Command tab.'],
+      ].map(([t,d])=>`<div style="margin-bottom:10px"><div style="font-family:var(--sans);font-weight:600;font-size:11px;color:var(--g);margin-bottom:3px">${t}</div><div style="font-size:10px;color:var(--t2);line-height:1.6">${d}</div></div>`).join('')}
+    </div>
+
+    <div class="card" style="margin-bottom:10px">
+      <div class="label" style="margin-bottom:8px">Non-Negotiable Rules</div>
+      ${['Hold ASTS uncovered through May 11 earnings call (5PM ET)','IONQ calls: sell 2 at $68, 2 at $78, 1 at $90+ OR sell all by Oct 15 if below $60','Never sell ASTS covered calls below $100 strike','Reserve: deploy on thesis-intact dips, refill before routing premium anywhere else','PACB max $1,500 — lottery ticket sizing only, given debt risk','Rotate satellite when score drops below 6/10 AND better opportunity scores 7.5+'].map((r,i)=>`
+      <div style="display:flex;gap:8px;margin-bottom:6px;font-size:11px;color:var(--t1)">
+        <span style="color:var(--r);flex-shrink:0;font-family:var(--sans);font-weight:600">${i+1}.</span><span>${r}</span>
+      </div>`).join('')}
+    </div>
+
+    <div class="card">
+      <div class="label" style="margin-bottom:8px;color:var(--r)">Reset</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="if(confirm('Clear screener?')){screenRes=[];localStorage.removeItem('orb3_screen');lastScreen=null;toast('Cleared');render();}">Clear Screen</button>
+        <button class="btn btn-ghost btn-sm" onclick="if(confirm('Clear intel cache?')){intelCache={};localStorage.removeItem('orb3_intel');toast('Cleared');render();}">Clear Intel</button>
+        <button class="btn btn-ghost btn-sm" onclick="if(confirm('Clear all data?')){localStorage.clear();location.reload();}">Full Reset</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function saveFmpKey(){
+  const v=document.getElementById('fmp-key')?.value?.trim();
+  if(!v){toast('Enter a key','warn');return;}
+  fmpKey=v; localStorage.setItem('orb3_fmp',v);
+  toast('FMP key saved ✓'); render();
+}
+function clearFmpKey(){fmpKey='';localStorage.removeItem('orb3_fmp');toast('Key cleared');render();}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INIT — auto-analyze on open
+// ═══════════════════════════════════════════════════════════════════════════════
+
+render();
+
+// Auto-analyze if key exists and data is >30 min stale
+if(fmpKey){
+  const stale=!lastAnalyze||Date.now()-new Date(lastAnalyze)>1800000;
+  if(stale){
+    setTimeout(autoRun, 1000);
+  } else {
+    const astsP=liveQuotes['ASTS']?.price||portfolio.asts_price;
+    setStatus&&setStatus(`Last analyzed: ${lastAnalyze}`);
+    // Recompute opportunities from cached data
+    opportunities=detectOpportunities(POSITIONS,liveQuotes,screenRes,screenBallast);
+    render();
+  }
+}
+</script>
+</body>
+</html>
