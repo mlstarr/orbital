@@ -6,7 +6,6 @@
   <title>◈ Advisor — Daily Financial Intelligence</title>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
   <script src="https://unpkg.com/@babel/standalone@7.23.6/babel.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -19,7 +18,6 @@
 <div id="root"></div>
 <script type="text/babel" data-presets="react">
 const { useState, useEffect } = React;
-const { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } = Recharts;
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -690,15 +688,19 @@ function AdvisorApp() {
               <>
                 <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "20px 24px", marginBottom: 12 }}>
                   <div style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: 2, marginBottom: 18 }}>WIN RATE BY CONVICTION</div>
-                  <ResponsiveContainer width="100%" height={160}>
-                    <BarChart data={convData.filter(c => c.trades > 0)} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
-                      <XAxis dataKey="name" tick={{ fill: C.muted, fontSize: 11, fontFamily: MONO }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fill: C.muted, fontSize: 10, fontFamily: MONO }} axisLine={false} tickLine={false} domain={[0, 100]} />
-                      <Tooltip contentStyle={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 4, fontFamily: MONO, fontSize: 11 }} formatter={(v, n) => [n === "winRate" ? v + "%" : v + "%", n === "winRate" ? "Win Rate" : "Avg Return"]} />
-                      <ReferenceLine y={50} stroke={C.border} strokeDasharray="3 3" />
-                      <Bar dataKey="winRate" fill={C.accent} radius={[3, 3, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    {convData.filter(c => c.trades > 0).map(c => (
+                      <div key={c.name} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <span style={{ fontFamily: MONO, fontSize: 11, color: convColor(c.name), width: 56, flexShrink: 0 }}>{c.name}</span>
+                        <div style={{ flex: 1, background: C.surface2, borderRadius: 3, height: 10, overflow: "hidden", position: "relative" }}>
+                          <div style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: 1, background: C.border }} />
+                          <div style={{ height: "100%", width: `${c.winRate}%`, background: c.winRate >= 50 ? C.accent : C.red, borderRadius: 3 }} />
+                        </div>
+                        <span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: c.winRate >= 50 ? C.accent : C.red, width: 42, textAlign: "right", flexShrink: 0 }}>{c.winRate}%</span>
+                        <span style={{ fontFamily: MONO, fontSize: 10, color: C.muted, width: 36, flexShrink: 0 }}>n={c.trades}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "20px 24px" }}>
